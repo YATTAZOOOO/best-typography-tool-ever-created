@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Typograf — local</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #f6f6f6;
+    color: #222;
+  }
+  h1 { margin: 0 0 4px; font-size: 20px; }
+  .sub { color: #666; font-size: 13px; margin-bottom: 20px; }
+  .controls {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 28px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .controls fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .controls label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+  .controls input[type=number] { width: 50px; }
+  .controls .label-bold { font-weight: 600; margin-right: 4px; }
+  .panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .pane {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+  }
+  .pane h2 { margin: 0 0 8px; font-size: 13px; color: #666; font-weight: 600; }
+  textarea {
+    width: 100%;
+    flex: 1;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    resize: vertical;
+    min-height: 200px;
+  }
+  .preview {
+    margin-top: 12px;
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+    padding: 10px;
+    background: #fafafa;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 80px;
+  }
+  .preview-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; }
+  button {
+    background: #111;
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.secondary { background: #eee; color: #222; }
+  .status { font-size: 12px; color: #888; }
+  .error { color: #b00020; }
+</style>
+</head>
+<body>
+  <h1>Typograf — local</h1>
+  <div class="sub">
+    Art. Lebedev Typograf web service + post-processing that adds <code>&amp;nbsp;</code>
+    after English articles, coordinating conjunctions, and short prepositions.
+  </div>
+
+  <div class="controls">
+    <fieldset>
+      <span class="label-bold">Entities:</span>
+      <label><input type="radio" name="entityType" value="1"> HTML</label>
+      <label><input type="radio" name="entityType" value="2"> XML</label>
+      <label><input type="radio" name="entityType" value="4" checked> Mixed</label>
+      <label><input type="radio" name="entityType" value="3"> None</label>
+    </fieldset>
+    <fieldset>
+      <label><input type="checkbox" id="useBr" checked> &lt;br&gt;</label>
+      <label><input type="checkbox" id="useP" checked> &lt;p&gt;</label>
+    </fieldset>
+    <fieldset>
+      <label>max nobr <input type="number" id="maxNobr" value="3" min="0" max="20"></label>
+    </fieldset>
+    <fieldset>
+      <label>
+        <input type="checkbox" id="englishNbsp" checked>
+        English nbsp (a, an, the, and, but, …)
+      </label>
+    </fieldset>
+  </div>
+
+  <div class="panes">
+    <div class="pane">
+      <h2>Input</h2>
+      <textarea id="input" placeholder="Paste text here..."></textarea>
+      <div class="actions">
+        <button id="go">Typograf</button>
+        <button id="clear" class="secondary">Clear</button>
+        <span class="status" id="status"></span>
+      </div>
+    </div>
+    <div class="pane">
+      <h2>Output (HTML)</h2>
+      <textarea id="output" readonly placeholder="Result will appear here..."></textarea>
+      <div class="preview-label">Rendered preview</div>
+      <div class="preview" id="preview"></div>
+      <div class="actions">
+        <button id="copy" class="secondary">Copy HTML</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const status = $("status");
+
+  async function run() {
+    const text = $("input").value;
+    if (!text.trim()) { status.textContent = "Nothing to process."; return; }
+    const entityType = parseInt(document.querySelector('input[name=entityType]:checked').value, 10);
+    const payload = {
+      text,
+      entityType,
+      useBr: $("useBr").checked,
+      useP: $("useP").checked,
+      maxNobr: parseInt($("maxNobr").value, 10) || 0,
+      englishNbsp: $("englishNbsp").checked,
+    };
+    $("go").disabled = true;
+    status.textContent = "Processing...";
+    status.classList.remove("error");
+    try {
+      const res = await fetch("/process", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        status.textContent = "Error: " + (data.error || res.statusText);
+        status.classList.add("error");
+        return;
+      }
+      $("output").value = data.result;
+      $("preview").innerHTML = data.result;
+      status.textContent = "Done.";
+    } catch (e) {
+      status.textContent = "Network error: " + e.message;
+      status.classList.add("error");
+    } finally {
+      $("go").disabled = false;
+    }
+  }
+
+  $("go").addEventListener("click", run);
+  $("clear").addEventListener("click", () => {
+    $("input").value = "";
+    $("output").value = "";
+    $("preview").innerHTML = "";
+    status.textContent = "";
+  });
+  $("copy").addEventListener("click", async () => {
+    const out = $("output").value;
+    if (!out) return;
+    try {
+      await navigator.clipboard.writeText(out);
+      status.textContent = "Copied.";
+    } catch {
+      $("output").select();
+      document.execCommand("copy");
+      status.textContent = "Copied.";
+    }
+  });
+  $("input").addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") run();
+  });
+</script>
+</body>
+</html>
