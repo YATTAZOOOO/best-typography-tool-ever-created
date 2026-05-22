@@ -8,7 +8,7 @@ import { addEnglishNbsp } from "./englishNbsp.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const INDEX_PATH = join(__dirname, "public", "index.html");
-const PORT = 5000;
+const PORT = parseInt(process.env.PORT ?? "5050", 10);
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);

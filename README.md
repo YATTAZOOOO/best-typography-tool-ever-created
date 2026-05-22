@@ -21,7 +21,22 @@ or
 npm start
 ```
 
-Then open http://localhost:5000.
+Then open http://localhost:5050.
+
+To use a different port (e.g. if 5050 is taken):
+
+```
+PORT=8080 node server.js
+```
+
+On Windows PowerShell:
+
+```
+$env:PORT=8080; node server.js
+```
+
+Note: on macOS, port 5000 is reserved by AirPlay Receiver, which is why the
+default here is 5050.
 
 ## Files
 
