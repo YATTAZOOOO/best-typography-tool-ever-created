@@ -76,8 +76,11 @@ default here is 5050.
 
 ## Files
 
-- `server.js` — HTTP server (Node built-in `http`, no dependencies).
+- `server.js` — HTTP server (Node built-in `http`, no dependencies). Serves the
+  static files in `public/` and handles `POST /process`.
 - `typograf.js` — SOAP client for the Art. Lebedev Typograf web service.
 - `englishTypography.js` — English line-breaking post-processor. Tag-safe: skips inside `<pre>`, `<code>`, `<script>`, `<style>`.
 - `highlight.js` — wraps inserted typographic characters in `<mark>` for the preview.
-- `public/index.html` — single-page UI.
+- `public/index.html` — page markup.
+- `public/styles.css` — styles.
+- `public/app.js` — client-side logic.

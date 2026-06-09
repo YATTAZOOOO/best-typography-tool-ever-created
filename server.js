@@ -1,15 +1,21 @@
 import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, normalize, extname, sep } from "node:path";
 
 import { RemoteTypograf } from "./typograf.js";
 import { applyEnglishTypography } from "./englishTypography.js";
 import { highlightChanges } from "./highlight.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const INDEX_PATH = join(__dirname, "public", "index.html");
+const PUBLIC_DIR = join(__dirname, "public");
 const PORT = parseInt(process.env.PORT ?? "5050", 10);
+
+const CONTENT_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+};
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
@@ -62,21 +68,40 @@ async function handleProcess(req, res) {
   sendJson(res, 200, { result, preview: highlightChanges(result) });
 }
 
-async function handleIndex(_req, res) {
-  const html = await readFile(INDEX_PATH);
+async function handleStatic(req, res) {
+  let urlPath = decodeURIComponent(req.url.split("?")[0]);
+  if (urlPath === "/") urlPath = "/index.html";
+
+  const filePath = normalize(join(PUBLIC_DIR, urlPath));
+  // Keep requests inside PUBLIC_DIR (no path traversal).
+  if (filePath !== PUBLIC_DIR && !filePath.startsWith(PUBLIC_DIR + sep)) {
+    res.writeHead(403, { "Content-Type": "text/plain" });
+    res.end("Forbidden");
+    return;
+  }
+
+  let data;
+  try {
+    data = await readFile(filePath);
+  } catch {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("Not Found");
+    return;
+  }
+
   res.writeHead(200, {
-    "Content-Type": "text/html; charset=utf-8",
-    "Content-Length": html.length,
+    "Content-Type": CONTENT_TYPES[extname(filePath)] ?? "application/octet-stream",
+    "Content-Length": data.length,
   });
-  res.end(html);
+  res.end(data);
 }
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === "GET" && req.url === "/") {
-      await handleIndex(req, res);
-    } else if (req.method === "POST" && req.url === "/process") {
+    if (req.method === "POST" && req.url === "/process") {
       await handleProcess(req, res);
+    } else if (req.method === "GET") {
+      await handleStatic(req, res);
     } else {
       res.writeHead(404, { "Content-Type": "text/plain" });
       res.end("Not Found");
