@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 import { RemoteTypograf } from "./typograf.js";
-import { addEnglishNbsp } from "./englishNbsp.js";
+import { applyEnglishTypography } from "./englishTypography.js";
+import { highlightChanges } from "./highlight.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const INDEX_PATH = join(__dirname, "public", "index.html");
@@ -38,14 +39,14 @@ async function handleProcess(req, res) {
   const text = typeof payload.text === "string" ? payload.text : "";
 
   const rt = new RemoteTypograf();
-  const entityType = parseInt(payload.entityType ?? 4, 10);
+  const entityType = parseInt(payload.entityType ?? 1, 10);
   if (entityType === 1) rt.htmlEntities();
   else if (entityType === 2) rt.xmlEntities();
   else if (entityType === 3) rt.noEntities();
   else rt.mixedEntities();
 
-  rt.br(payload.useBr ?? true);
-  rt.p(payload.useP ?? true);
+  rt.br(payload.useBr ?? false);
+  rt.p(payload.useP ?? false);
   rt.nobr(parseInt(payload.maxNobr ?? 3, 10));
 
   let result;
@@ -56,11 +57,9 @@ async function handleProcess(req, res) {
     return;
   }
 
-  if (payload.englishNbsp ?? true) {
-    result = addEnglishNbsp(result);
-  }
+  result = applyEnglishTypography(result);
 
-  sendJson(res, 200, { result });
+  sendJson(res, 200, { result, preview: highlightChanges(result) });
 }
 
 async function handleIndex(_req, res) {
