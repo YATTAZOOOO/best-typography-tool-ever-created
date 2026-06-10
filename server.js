@@ -56,18 +56,24 @@ async function handleProcess(req, res) {
   rt.p(payload.useP ?? false);
   rt.nobr(parseInt(payload.maxNobr ?? 3, 10));
 
+  const [protectedText, restoreMap] = protectQuotes(text);
+
   let result;
   try {
-    result = await rt.processText(protectQuotes(text));
+    result = await rt.processText(protectedText);
   } catch (exc) {
     sendJson(res, 502, { error: exc.message });
     return;
   }
 
   result = applyEnglishTypography(result);
-  result = restoreQuotes(result); // bring the user's original quotes back
 
-  sendJson(res, 200, { result, preview: highlightChanges(result) });
+  // Restore quotes after highlighting, so placeholders (plain text to
+  // highlightChanges) keep the user's quotes out of the change markup.
+  const preview = restoreQuotes(highlightChanges(result), restoreMap);
+  result = restoreQuotes(result, restoreMap);
+
+  sendJson(res, 200, { result, preview });
 }
 
 async function handleStatic(req, res) {

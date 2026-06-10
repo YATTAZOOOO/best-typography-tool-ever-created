@@ -31,11 +31,15 @@ preposition and a particle (`up, on, in, off, out`) may bind on both sides
 
 ## Quotes
 
-Quotes are left **exactly as you typed them**. Whatever quote characters appear
-in the input — straight `"` / `'`, guillemets `«»`, curly `“” ‘’`, low/high
-`„‟ ‚‛`, single guillemets `‹›` — come back unchanged; the upstream service is
-never given a chance to rewrite them (e.g. `"…"` is *not* turned into `«…»`).
-This also means straight apostrophes stay straight (`don't`, not `don’t`).
+Quotes are left **exactly as you typed them**, in any form — a literal
+character (straight `"` / `'`, guillemets `«»`, curly `“” ‘’`, low/high
+`„‟ ‚‛`, single guillemets `‹›`), a named HTML entity (`&ldquo; &rdquo;
+&lsquo; &rsquo; &laquo; &raquo; &quot; &apos;` …), or a numeric entity
+(`&#39;`, `&#8220;`, `&#x201C;` …). Each comes back byte-for-byte; the upstream
+service is never given a chance to rewrite them (e.g. `&ldquo;…&rdquo;` is *not*
+turned into `&laquo;…&raquo;`). This also means straight apostrophes stay
+straight (`don't`, not `don’t`), so a document with mixed quote forms stays
+mixed.
 
 ## Highlight changes
 
@@ -87,7 +91,7 @@ default here is 5050.
 - `server.js` — HTTP server (Node built-in `http`, no dependencies). Serves the
   static files in `public/` and handles `POST /process`.
 - `typograf.js` — SOAP client for the Art. Lebedev Typograf web service.
-- `quotes.js` — hides quotes from the service and restores them, so they're kept verbatim.
+- `quotes.js` — hides quotes (literal chars, named and numeric entities) from the service and restores them, so they're kept verbatim.
 - `englishTypography.js` — English line-breaking post-processor. Tag-safe: skips inside `<pre>`, `<code>`, `<script>`, `<style>`.
 - `highlight.js` — wraps inserted typographic characters in `<mark>` for the preview.
 - `public/index.html` — page markup.
