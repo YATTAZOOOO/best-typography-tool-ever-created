@@ -103,7 +103,7 @@ textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; 
 .preview-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .preview {
   border: 1px solid var(--border); border-radius: 9px; padding: 14px 16px;
-  background: var(--surface-2); min-height: 120px; flex: 1;
+  background: var(--surface-2); min-height: 120px; flex: 1 0 auto;
   font-size: 15px; line-height: 1.7; overflow-wrap: anywhere;
 }
 .preview:empty::before { content: "Rendered preview will appear here…"; color: var(--muted); font-size: 13px; }

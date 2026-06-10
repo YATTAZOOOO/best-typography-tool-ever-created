@@ -2,7 +2,7 @@
 
 A local web wrapper around the [Art. Lebedev Typograf](https://www.artlebedev.ru/typograf/) web service,
 plus a set of English line-breaking rules the upstream service doesn't apply,
-and a preview that highlights what changed.
+quotes preserved exactly as you typed them, and a preview that highlights what changed.
 
 ## English line-breaking rules
 
@@ -29,14 +29,22 @@ over") rules both render as a non-breaking space. Words that are both a
 preposition and a particle (`up, on, in, off, out`) may bind on both sides
 (e.g. `give&nbsp;up&nbsp;the`) — this is intentional.
 
+## Quotes
+
+Quotes are left **exactly as you typed them**. Whatever quote characters appear
+in the input — straight `"` / `'`, guillemets `«»`, curly `“” ‘’`, low/high
+`„‟ ‚‛`, single guillemets `‹›` — come back unchanged; the upstream service is
+never given a chance to rewrite them (e.g. `"…"` is *not* turned into `«…»`).
+This also means straight apostrophes stay straight (`don't`, not `don’t`).
+
 ## Highlight changes
 
 The **Result (HTML)** pane shows the raw HTML you can copy. The **Preview**
 pane renders it, and — with the *Highlight changes* switch on (default) — wraps
-the typographic characters Typograf inserted (`&nbsp;`, dashes, guillemets,
-curly quotes, ellipses, `©/®/™`, …) in a pink highlight so you can see exactly
-what changed. Toggling the switch re-renders the stored result without a
-re-request.
+the typographic characters Typograf inserted (`&nbsp;`, dashes, ellipses,
+`©/®/™`, `×`, `−`, …) in a pink highlight so you can see exactly what changed.
+Quotes are preserved as-is, so they are never highlighted. Toggling the switch
+re-renders the stored result without a re-request.
 
 ## Defaults
 
@@ -79,6 +87,7 @@ default here is 5050.
 - `server.js` — HTTP server (Node built-in `http`, no dependencies). Serves the
   static files in `public/` and handles `POST /process`.
 - `typograf.js` — SOAP client for the Art. Lebedev Typograf web service.
+- `quotes.js` — hides quotes from the service and restores them, so they're kept verbatim.
 - `englishTypography.js` — English line-breaking post-processor. Tag-safe: skips inside `<pre>`, `<code>`, `<script>`, `<style>`.
 - `highlight.js` — wraps inserted typographic characters in `<mark>` for the preview.
 - `public/index.html` — page markup.

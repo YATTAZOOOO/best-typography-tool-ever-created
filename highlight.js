@@ -17,9 +17,7 @@ const GLYPHS = new Set([
   " ", // narrow nbsp
   "—", // — em dash
   "–", // – en dash
-  "«", "»", // « »
-  "“", "”", "„", // “ ” „
-  "‘", "’", // ‘ ’
+  // Quotes are preserved verbatim (see quotes.js), so they are never a change.
   "…", // … ellipsis
   "©", "®", "™", // © ® ™
   "×", // × multiplication sign

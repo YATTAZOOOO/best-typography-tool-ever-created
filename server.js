@@ -6,6 +6,7 @@ import { dirname, join, normalize, extname, sep } from "node:path";
 import { RemoteTypograf } from "./typograf.js";
 import { applyEnglishTypography } from "./englishTypography.js";
 import { highlightChanges } from "./highlight.js";
+import { protectQuotes, restoreQuotes } from "./quotes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "public");
@@ -57,13 +58,14 @@ async function handleProcess(req, res) {
 
   let result;
   try {
-    result = await rt.processText(text);
+    result = await rt.processText(protectQuotes(text));
   } catch (exc) {
     sendJson(res, 502, { error: exc.message });
     return;
   }
 
   result = applyEnglishTypography(result);
+  result = restoreQuotes(result); // bring the user's original quotes back
 
   sendJson(res, 200, { result, preview: highlightChanges(result) });
 }
